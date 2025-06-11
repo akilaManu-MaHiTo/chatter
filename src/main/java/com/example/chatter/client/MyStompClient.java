@@ -46,4 +46,9 @@ public class MyStompClient {
       e.printStackTrace();
     }
   }
+
+  public void disconnectUser(String userName) {
+    session.send("/app/disconnect", userName);
+    System.out.println("User Disconnected" + userName);
+  }
 }
