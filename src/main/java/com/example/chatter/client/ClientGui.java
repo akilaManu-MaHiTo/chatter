@@ -1,13 +1,34 @@
 package com.example.chatter.client;
 
-import java.util.concurrent.ExecutionException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.*;
 
-import com.example.chatter.model.Message;
+public class ClientGui extends JFrame {
 
-public class ClientGui {
-    public static void main(String[] args) throws InterruptedException, ExecutionException{
-        MyStompClient myStompClient = new MyStompClient("Akila");
-        myStompClient.sendMessage((new Message("akila","Hii!")));
-    }
+  public ClientGui(String userName) {
+    super("User " + userName);
+    setSize(1200, 600);
+    setLocationRelativeTo(null);
+    setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+    addWindowListener(
+      new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent e) {
+          int confirm = JOptionPane.showConfirmDialog(
+            ClientGui.this,
+            "Are you sure you want to exit?",
+            "Exit Confirmation",
+            JOptionPane.YES_NO_OPTION
+          );
 
+          if (confirm == JOptionPane.YES_OPTION) {
+            ClientGui.this.dispose();
+          }
+        }
+      }
+    );
+
+    setVisible(true);
+  }
 }
