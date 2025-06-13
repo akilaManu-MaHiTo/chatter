@@ -12,10 +12,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
 
-public class ClientGui extends JFrame {
+public class ClientGui extends JFrame implements MessageListener {
 
   private JPanel contactsPanel;
   private JPanel messageComp;
@@ -26,7 +30,7 @@ public class ClientGui extends JFrame {
     throws InterruptedException, ExecutionException {
     super("Chattar");
     this.userName = userName;
-    myStompClient = new MyStompClient(userName);
+    myStompClient = new MyStompClient(this, userName);
 
     setSize(800, 600);
     setLocationRelativeTo(null);
@@ -266,11 +270,11 @@ public class ClientGui extends JFrame {
     Runnable sendMessage = () -> {
       String input = inputField.getText().trim();
       if (input.isEmpty()) return;
-      messageComp.add(createMessageComponent(input, "Now", true));
-      messageComp.revalidate();
-      messageComp.repaint();
-      
-      myStompClient.sendMessage(new Message(userName, input));
+      inputField.setText("");
+
+      myStompClient.sendMessage(
+        new Message(userName, input, systemDateAndTime())
+      );
     };
 
     sendButton.addActionListener(e -> sendMessage.run());
@@ -290,6 +294,14 @@ public class ClientGui extends JFrame {
     chatPanel.add(inputPanel, BorderLayout.SOUTH);
 
     add(chatPanel, BorderLayout.CENTER);
+  }
+
+  private String systemDateAndTime() {
+    LocalDateTime now = LocalDateTime.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd HH:mm:ss"
+    );
+    return now.format(formatter);
   }
 
   private JPanel createMessageComponent(
@@ -327,6 +339,7 @@ public class ClientGui extends JFrame {
     bubblePanel.setBackground(Color.WHITE);
     bubblePanel.add(messageText);
 
+    
     JLabel timeLabel = new JLabel(time);
     timeLabel.setFont(new Font("Inter", Font.PLAIN, 10));
     timeLabel.setForeground(Color.GRAY);
@@ -343,5 +356,23 @@ public class ClientGui extends JFrame {
 
     messagePanel.add(alignPanel, BorderLayout.CENTER);
     return messagePanel;
+  }
+
+  @Override
+  public void onMessageReceive(Message message) {
+    // TODO Auto-generated method stub
+    String newMessage = message.getMessage();
+    boolean isUser = message.getUser().equals(userName);
+    String time = message.getTime();
+    messageComp.add(createMessageComponent(newMessage, time, isUser));
+    messageComp.revalidate();
+    messageComp.repaint();
+    System.out.println("onMessageReceive");
+  }
+
+  @Override
+  public void onActiveUserUpdate(ArrayList<String> users) {
+    // TODO Auto-generated method stub
+    System.out.println("Not Yet");
   }
 }

@@ -1,17 +1,25 @@
 package com.example.chatter.config;
 
+import com.example.chatter.client.MessageListener;
 import com.example.chatter.model.Message;
 import java.lang.reflect.Type;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 
-@AllArgsConstructor
 public class MyStompSessionHandler extends StompSessionHandlerAdapter {
 
   private String userName;
+  private MessageListener messageListener;
+
+  public MyStompSessionHandler(MessageListener messageListener,String userName) {
+    this.userName = userName;
+    this.messageListener = messageListener;
+  }
 
   @Override
   public void afterConnected(
@@ -33,8 +41,9 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
           @Override
           public void handleFrame(StompHeaders headers, Object payload) {
             try {
-              if (payload instanceof Message) {
+              if (payload instanceof Message) {               
                 Message message = (Message) payload;
+                messageListener.onMessageReceive(message);
                 System.out.println(
                   "Received message from: " + message.getUser()
                 );
