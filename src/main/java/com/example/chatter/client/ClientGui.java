@@ -10,11 +10,12 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
@@ -25,6 +26,9 @@ public class ClientGui extends JFrame implements MessageListener {
   private JPanel messageComp;
   private MyStompClient myStompClient;
   private String userName;
+  private String selectedUserName;
+  private JLabel contactName;
+  private JLabel statusLabel;
 
   public ClientGui(String userName)
     throws InterruptedException, ExecutionException {
@@ -90,90 +94,6 @@ public class ClientGui extends JFrame implements MessageListener {
     contactsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     contactsPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
-    String[] contacts = {
-      "Emily",
-      "Daniel",
-      "Sarah",
-      "James",
-      "Design Team",
-      "Kate",
-      "Kate",
-      "Kate",
-      "Kate",
-      "Kate",
-      "Kate",
-      "Kate",
-      "Kate",
-    };
-    String[] messages = {
-      "Yes, that works for me!",
-      "Great, thanks!",
-      "I'll send it to you tomorrow",
-      "Are you coming today?",
-      "Can you review this?",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-      "Type a message...",
-    };
-    String[] times = {
-      "10:15",
-      "09:45",
-      "08:30",
-      "12:00",
-      "11:30",
-      "13:10",
-      "13:10",
-      "13:10",
-      "13:10",
-      "13:10",
-      "13:10",
-      "13:10",
-      "13:10",
-    };
-
-    for (int i = 0; i < contacts.length; i++) {
-      JPanel contactPanel = new JPanel(new BorderLayout());
-      contactPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
-      contactPanel.setBackground(Utilities.GRAY_COLOR);
-      contactPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-
-      JLabel nameLabel = new JLabel(contacts[i]);
-      nameLabel.setFont(new Font("Inter", Font.BOLD, 14));
-      nameLabel.setForeground(Color.BLACK);
-
-      JLabel messageLabel = new JLabel(messages[i]);
-      messageLabel.setFont(new Font("Inter", Font.PLAIN, 12));
-      messageLabel.setForeground(Color.DARK_GRAY);
-
-      JLabel timeLabel = new JLabel(times[i]);
-      timeLabel.setFont(new Font("Inter", Font.PLAIN, 10));
-      timeLabel.setForeground(Color.GRAY);
-      timeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
-      JPanel textPanel = new JPanel();
-      textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-      textPanel.setBackground(Utilities.GRAY_COLOR);
-      textPanel.add(nameLabel);
-      textPanel.add(messageLabel);
-
-      JPanel contactContent = new JPanel(new BorderLayout());
-      contactContent.setBackground(Utilities.GRAY_COLOR);
-      contactContent.add(textPanel, BorderLayout.CENTER);
-
-      JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-      timePanel.setBackground(Utilities.GRAY_COLOR);
-      timePanel.add(timeLabel);
-      contactContent.add(timePanel, BorderLayout.EAST);
-
-      contactPanel.add(contactContent, BorderLayout.CENTER);
-      contactsPanel.add(contactPanel);
-    }
-
     JScrollPane scrollPane = new JScrollPane(
       contactsPanel,
       JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -184,7 +104,7 @@ public class ClientGui extends JFrame implements MessageListener {
 
     JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
     verticalScrollBar.setUI(new ModernScrollBarUI());
-    verticalScrollBar.setPreferredSize(new Dimension(8, Integer.MAX_VALUE)); // thinner
+    verticalScrollBar.setPreferredSize(new Dimension(8, Integer.MAX_VALUE));
     verticalScrollBar.setUnitIncrement(16);
     verticalScrollBar.setBlockIncrement(50);
 
@@ -203,11 +123,11 @@ public class ClientGui extends JFrame implements MessageListener {
     headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
     headerPanel.setBackground(Utilities.CHATTER_BACKGROUND_COLOR);
 
-    JLabel contactName = new JLabel("Emily");
+    contactName = new JLabel(selectedUserName);
     contactName.setFont(new Font("Inter", Font.BOLD, 16));
     contactName.setForeground(Color.BLACK);
 
-    JLabel statusLabel = new JLabel("Active now");
+    statusLabel = new JLabel("");
     statusLabel.setFont(new Font("Inter", Font.PLAIN, 12));
     statusLabel.setForeground(Color.GRAY);
 
@@ -224,21 +144,6 @@ public class ClientGui extends JFrame implements MessageListener {
     messageComp.setLayout(new BoxLayout(messageComp, BoxLayout.Y_AXIS));
     messageComp.setBackground(Color.WHITE);
     messageComp.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-    JPanel message1 = createMessageComponent(
-      "Are you available for a quick meeting this afternoon?",
-      "10:30",
-      false
-    );
-    JPanel message2 = createMessageComponent(
-      "Yes, that works for me!",
-      "10:30",
-      true
-    );
-
-    messageComp.add(message1);
-    messageComp.add(Box.createVerticalStrut(10));
-    messageComp.add(message2);
 
     JScrollPane scrollPane = new JScrollPane(messageComp);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -270,6 +175,16 @@ public class ClientGui extends JFrame implements MessageListener {
     Runnable sendMessage = () -> {
       String input = inputField.getText().trim();
       if (input.isEmpty()) return;
+      if (selectedUserName == null || selectedUserName.isEmpty()) {
+        JOptionPane.showMessageDialog(
+          null,
+          "Please Select A User To Send Message",
+          "Error",
+          JOptionPane.ERROR_MESSAGE
+        );
+        inputField.setText("");
+        return;
+      }
       inputField.setText("");
 
       myStompClient.sendMessage(
@@ -283,6 +198,14 @@ public class ClientGui extends JFrame implements MessageListener {
         @Override
         public void keyTyped(KeyEvent e) {
           if (e.getKeyChar() == KeyEvent.VK_ENTER) {
+            if (selectedUserName.isEmpty()) {
+              JOptionPane.showMessageDialog(
+                null,
+                "Please Select A User To Send Message",
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+              );
+            }
             sendMessage.run();
           }
         }
@@ -339,7 +262,6 @@ public class ClientGui extends JFrame implements MessageListener {
     bubblePanel.setBackground(Color.WHITE);
     bubblePanel.add(messageText);
 
-    
     JLabel timeLabel = new JLabel(time);
     timeLabel.setFont(new Font("Inter", Font.PLAIN, 10));
     timeLabel.setForeground(Color.GRAY);
@@ -370,9 +292,91 @@ public class ClientGui extends JFrame implements MessageListener {
     System.out.println("onMessageReceive");
   }
 
-  @Override
   public void onActiveUserUpdate(ArrayList<String> users) {
-    // TODO Auto-generated method stub
-    System.out.println("Not Yet");
+    
+    if (contactsPanel == null) return;
+
+    contactsPanel.removeAll();
+
+    for (String user : users) {
+      if (user.equals(userName)) {
+        JPanel contactPanel = new JPanel(new BorderLayout());
+        contactPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+        contactPanel.setBackground(Utilities.GRAY_COLOR);
+        contactPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+
+        JLabel nameLabel = new JLabel("Me");
+        nameLabel.setFont(new Font("Inter", Font.BOLD, 14));
+        nameLabel.setForeground(Color.BLACK);
+
+        JLabel messageLabel = new JLabel(user);
+        messageLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+        messageLabel.setForeground(Color.DARK_GRAY);
+
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setBackground(Utilities.GRAY_COLOR);
+        textPanel.add(nameLabel);
+        textPanel.add(messageLabel);
+
+        contactPanel.add(textPanel, BorderLayout.CENTER);
+        contactsPanel.add(contactPanel);
+        break;
+      }
+    }
+
+    for (String user : users) {
+      if (!user.equals(userName)) {
+        JPanel contactPanel = new JPanel(new BorderLayout());
+        contactPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+        contactPanel.setBackground(Utilities.GRAY_COLOR);
+        contactPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+
+        JPanel nameRow = new JPanel();
+        nameRow.setLayout(new BoxLayout(nameRow, BoxLayout.X_AXIS));
+        nameRow.setOpaque(false);
+
+        JLabel nameLabel = new JLabel(user);
+        nameLabel.setFont(new Font("Inter", Font.BOLD, 14));
+        nameLabel.setForeground(Color.BLACK);
+
+        JLabel onlineLabel = new JLabel("🟢");
+        onlineLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+        onlineLabel.setForeground(Color.GREEN);
+
+        nameRow.add(nameLabel);
+        nameRow.add(Box.createHorizontalGlue());
+        nameRow.add(onlineLabel);
+
+        JLabel messageLabel = new JLabel("Online");
+        messageLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+        messageLabel.setForeground(Color.GREEN);
+
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setBackground(Utilities.GRAY_COLOR);
+        textPanel.add(nameRow);
+
+        contactPanel.add(textPanel, BorderLayout.CENTER);
+        contactsPanel.add(contactPanel);
+        contactPanel.addMouseListener(
+          new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+              selectedUserName = user;
+              contactName.setText(selectedUserName);
+              statusLabel.setText("Active Now");
+              System.out.println("Selected user: " + selectedUserName);
+              revalidate();
+              repaint();
+            }
+          }
+        );
+      }
+    }
+
+    contactsPanel.revalidate();
+    contactsPanel.repaint();
   }
+
 }
