@@ -19,7 +19,7 @@ public class MyStompClient {
   private StompSession session;
   private String userName;
 
-  public MyStompClient(String userName)
+  public MyStompClient(MessageListener messageListener, String userName)
     throws InterruptedException, ExecutionException {
     this.userName = userName;
 
@@ -30,7 +30,10 @@ public class MyStompClient {
     WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
     stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
-    StompSessionHandler sessionHandler = new MyStompSessionHandler(userName);
+    StompSessionHandler sessionHandler = new MyStompSessionHandler(
+      messageListener,
+      userName
+    );
     String url = "ws://localhost:8080/ws";
 
     session = stompClient.connectAsync((url), sessionHandler).get();

@@ -1,5 +1,7 @@
 package com.example.chatter.controller;
 
+import java.util.ArrayList;
+
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -36,5 +38,11 @@ public class WebsocketController {
         webSocketSessionManager.broadcastOnlineUsers();
         System.out.println("disconected" + userName);
     }
+
+    @MessageMapping("/ready")
+    public void clientIsReady() {
+        webSocketSessionManager.broadcastOnlineUsers();
+    }
+
 
 }
