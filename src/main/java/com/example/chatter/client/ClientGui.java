@@ -230,18 +230,36 @@ public class ClientGui extends JFrame implements MessageListener {
   private JPanel createMessageComponent(
     String message,
     String time,
-    boolean isUser
+    boolean isUser,
+    String user
   ) {
     JPanel messagePanel = new JPanel();
     messagePanel.setLayout(new BorderLayout());
     messagePanel.setBackground(Utilities.CHATTER_BACKGROUND_COLOR);
     messagePanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
+    // Bubble panel holds username, message, and time
+    JPanel bubblePanel = new JPanel();
+    bubblePanel.setLayout(new BoxLayout(bubblePanel, BoxLayout.Y_AXIS));
+    bubblePanel.setBackground(Color.WHITE);
+    bubblePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+
+    // Username label
+    if(user.equals(userName)){
+      user = "me";
+    }
+    JLabel whoIsThisLabel = new JLabel(user);
+    whoIsThisLabel.setFont(new Font("Inter", Font.BOLD, 11));
+    whoIsThisLabel.setForeground(Color.GRAY);
+    bubblePanel.add(whoIsThisLabel);
+
+    // Message text
     JTextArea messageText = new JTextArea(message);
     messageText.setFont(new Font("Inter", Font.PLAIN, 14));
     messageText.setWrapStyleWord(true);
     messageText.setLineWrap(true);
     messageText.setEditable(false);
+    messageText.setOpaque(true);
     messageText.setBackground(
       isUser ? Utilities.USER_CHAT_COLOR : Utilities.NOT_USER_CHAT_COLOR
     );
@@ -251,26 +269,21 @@ public class ClientGui extends JFrame implements MessageListener {
         BorderFactory.createEmptyBorder(8, 12, 8, 12)
       )
     );
-    int maxWidth = 400;
-    messageText.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
-    messageText.setPreferredSize(
-      new Dimension(maxWidth, messageText.getPreferredSize().height)
-    );
 
-    JPanel bubblePanel = new JPanel();
-    bubblePanel.setLayout(new BoxLayout(bubblePanel, BoxLayout.Y_AXIS));
-    bubblePanel.setBackground(Color.WHITE);
+    // Let layout handle height, but limit max width
+    messageText.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
     bubblePanel.add(messageText);
 
+    // Time label
     JLabel timeLabel = new JLabel(time);
     timeLabel.setFont(new Font("Inter", Font.PLAIN, 10));
     timeLabel.setForeground(Color.GRAY);
     timeLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
+    bubblePanel.add(Box.createVerticalStrut(3)); // spacing before time
     bubblePanel.add(timeLabel);
 
-    JPanel alignPanel = new JPanel();
-    alignPanel.setLayout(
+    // Alignment panel: align left or right based on sender
+    JPanel alignPanel = new JPanel(
       new FlowLayout(isUser ? FlowLayout.RIGHT : FlowLayout.LEFT)
     );
     alignPanel.setBackground(Utilities.CHATTER_BACKGROUND_COLOR);
@@ -286,14 +299,14 @@ public class ClientGui extends JFrame implements MessageListener {
     String newMessage = message.getMessage();
     boolean isUser = message.getUser().equals(userName);
     String time = message.getTime();
-    messageComp.add(createMessageComponent(newMessage, time, isUser));
+    String user = message.getUser();
+    messageComp.add(createMessageComponent(newMessage, time, isUser, user));
     messageComp.revalidate();
     messageComp.repaint();
     System.out.println("onMessageReceive");
   }
 
   public void onActiveUserUpdate(ArrayList<String> users) {
-    
     if (contactsPanel == null) return;
 
     contactsPanel.removeAll();
@@ -378,5 +391,4 @@ public class ClientGui extends JFrame implements MessageListener {
     contactsPanel.revalidate();
     contactsPanel.repaint();
   }
-
 }
