@@ -18,10 +18,6 @@ Chatter is a modern Java desktop chat application featuring real-time messaging,
 - **User-specific Styling**: Different colors and alignment for sent/received messages
 - **Extensible Architecture**: Ready for future enhancements
 
-## 🖼️ Screenshots
-
-*(Add your screenshots here showing the chat interface, message bubbles, and timestamps)*
-
 ## 🛠️ Technologies
 
 - **Java 17**
